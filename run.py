@@ -70,9 +70,14 @@ def run(smtp_address,
     message = None
     attachments = ()
     if file_path.endswith('txt'):
+        # use first line as subject
         with open(file_path) as fp:
+            subject = fp.readline().strip()
             message = fp.read().replace('\n', '').strip()
     else:
+        # use file name as subject
+        basename_parts = os.path.basename(file_path).split('.')
+        subject = basename[:-1].replace('_', ' ')
         attachments = (file_path,)
 
     send_message(
@@ -114,10 +119,10 @@ def main():
     carrier = args.carrier or os.environ.get('CARRIER')
     sender = args.sender or os.environ.get('SENDER')
 
+    # validate args
     required_args = ('smtp_address', 'smtp_port',
                      'smtp_username', 'smtp_password',
                      'number', 'carrier', 'sender')
-
     exit = False
     for arg in required_args:
         if not locals().get(arg):
@@ -128,6 +133,7 @@ def main():
             parser.print_help()
             sys.exit(1)
 
+    # run text sender
     run(
         smtp_address=smtp_address,
         smtp_port=smtp_port,
