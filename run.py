@@ -13,22 +13,16 @@ from send import send_message
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 RELATIVE_NUMBERS_DIR = 'numbers'
 PROGRESS_FILENAME = 'progress.csv'
-
-SMTP_USERNAME = os.environ.get('SMTP_USERNAME')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
-SMTP_ADDRESS = os.environ.get('SMTP_ADDRESS')
-SMTP_PORT = int(os.environ.get('SMTP_PORT'))
-
+WELCOME_SUBJECT = "Hi! I'm Telegram Bot!"
+WELCOME_MESSAGE = (
+    "I'll be sending you a quote, pic, or other fun thing around "
+    "apple o'clock each workday. Please reach out to Paul if you notice any "
+    "bugs. Alright! Here's the first..."
+)
+EXTENTIONS = ['txt', 'png', 'jpg']
 
 def get_next_file_path_for_number(number_dir):
-    if not os.path.exists(number_dir):
-        os.makedirs(number_dir)
-
     progress_file_path = os.path.join(number_dir, PROGRESS_FILENAME)
-    if not os.path.exists(progress_file_path):
-        with open(progress_file_path, 'x'):
-            pass
-
     with open(progress_file_path) as fp:
         reader = csv.reader(fp)
         rows = list(reader)
@@ -37,8 +31,7 @@ def get_next_file_path_for_number(number_dir):
     files_sent = set(os.path.basename(row[1]) for row in rows)
 
     files_cached = []
-    extentions = ['txt', 'png', 'jpg']
-    for extention in extentions:
+    for extention in EXTENTIONS:
         pattern = number_dir.rstrip('/') + '/*.{}'.format(extention)
         files_cached += glob.glob(pattern)
 
@@ -65,6 +58,26 @@ def run(smtp_address,
  
     number_dir = os.path.join(DIRNAME, RELATIVE_NUMBERS_DIR, number)
 
+    if not os.path.exists(number_dir):
+        raise RuntimeError('Path does not exist: {}'.format(number_dir))
+
+    progress_file_path = os.path.join(number_dir, PROGRESS_FILENAME)
+    if not os.path.exists(progress_file_path):
+        with open(progress_file_path, 'x'):
+            pass
+
+        send_message(
+            smtp_address,
+            smtp_port,
+            smtp_username,
+            smtp_password,
+            number,
+            carrier,
+            sender,
+            subject=WELCOME_SUBJECT,
+            message=WELCOME_MESSAGE,
+        )
+
     file_path = get_next_file_path_for_number(number_dir)
 
     message = None
@@ -73,11 +86,12 @@ def run(smtp_address,
         # use first line as subject
         with open(file_path) as fp:
             subject = fp.readline().strip()
-            message = fp.read().replace('\n', '').strip()
+            message = fp.read().replace('\n', ' ').strip()
     else:
         # use file name as subject
         basename_parts = os.path.basename(file_path).split('.')
-        subject = basename[:-1].replace('_', ' ')
+        parts = (part.replace('_', ' ') for part in basename_parts[:-2])
+        subject = ''.join(parts)
         attachments = (file_path,)
 
     send_message(
@@ -93,7 +107,6 @@ def run(smtp_address,
         attachments=attachments,
     )
 
-    progress_file_path = os.path.join(number_dir, PROGRESS_FILENAME)
     with open(progress_file_path, 'a') as fp:
         writer = csv.writer(fp)
         now = str(datetime.datetime.utcnow())

@@ -85,7 +85,6 @@ def send_message(smtp_address,
         msg = build_mms(
             number=number,
             carrier=carrier,
-            smtp_server=smtp_server,
             sender=sender,
             subject=subject,
             attachments=attachments,
@@ -94,12 +93,11 @@ def send_message(smtp_address,
         msg = build_sms(
             number=number,
             carrier=carrier,
-            smtp_server=smtp_server,
             sender=sender,
             subject=subject,
             message=message,
         )
 
-    send_server.send_message(msg)
-    send_server.quit()
+    smtp_server.send_message(msg)
+    smtp_server.quit()
 
