@@ -17,7 +17,7 @@ WELCOME_SUBJECT = "Hi! I'm Telegram Bot!"
 WELCOME_MESSAGE = (
     "I'll be sending you a quote, pic, or other fun thing around "
     "apple o'clock each workday. Please reach out to Paul if you notice any "
-    "bugs. Alright! Here's the first..."
+    "bugs or want me to stop. Alright! Here's the first..."
 )
 EXTENTIONS = ['txt', 'png', 'jpg']
 
