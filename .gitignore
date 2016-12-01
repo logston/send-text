@@ -3,3 +3,4 @@ numbers/
 env.sh
 *.swp
 *.log
+db.sqlite3
